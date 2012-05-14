@@ -45,7 +45,10 @@ class RelaisBoardNode
 		ros::Publisher topicPub_keypad;
 		ros::Publisher topicPub_IRSensor;
 		ros::Publisher topicPub_boardState;
+
 		//optional topics:
+		ros::Subscriber topicSub_setRelayDigOut;
+
 		enum Modules {
 			DRIVE1=0,
 			DRIVE2=1,
@@ -100,6 +103,7 @@ class RelaisBoardNode
 		void sendAnalogIn();
 		//IOBoard
 		void getNewLCDOutput(const cob_relayboard::LCDOutput&); //output on a 20 char lcd display
+		void getRelayBoardDigOut(const cob_relayboard::IOOut&);
 		void sendIOBoardDigIn();
 		void sendIOBoardDigOut();
 		void getIOBoardDigOut(const cob_relayboard::IOOut&);

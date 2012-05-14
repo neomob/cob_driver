@@ -81,6 +81,9 @@ int RelaisBoardNode::init()
 	n.getParam("hasLCDOut", hasLCDOut);
 	if(hasLCDOut == 1) topicSub_lcdDisplay = n.subscribe("/srb_lcd_display",1,&RelaisBoardNode::getNewLCDOutput, this);
 
+
+	topicSub_setRelayDigOut = n.subscribe("/srb_relay_set_dig_out",1,&RelaisBoardNode::getRelayBoardDigOut, this);
+
 	if(activeModule[IO_BOARD] == 1)
 	{
 		topicSub_setDigOut = n.subscribe("/srb_io_set_dig_out",1,&RelaisBoardNode::getIOBoardDigOut, this);
@@ -541,4 +544,11 @@ void RelaisBoardNode::sendIOBoardAnalogIn()
 	m_SerRelayBoard->getIOBoardAnalogIn(analogIn);
 	for(int i=0;i <8; i++) in.input[i] = analogIn[i];
 	topicPub_analogIn.publish(in);
+}
+
+void RelaisBoardNode::getRelayBoardDigOut(const cob_relayboard::IOOut& setOut)
+{
+	ROS_INFO("Got Request for changing channel of Relay board");
+	if(!relayboard_available) return;
+	m_SerRelayBoard->setRelayBoardDigOut(setOut.channel, setOut.active);
 }
