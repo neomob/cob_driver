@@ -347,7 +347,7 @@ void RelaisBoardNode::sendEmergencyStopStates()
 	ros::Duration duration_since_EM_confirmed;
 	cob_relayboard::EmergencyStopState EM_msg;
 
-	// assign input (laser, button) specific EM state
+	// assign input (laser, button) specific EM state TODO: Laser and Scanner stop can't be read independently (e.g. if button is stop --> no informtion about scanner, if scanner ist stop --> no informtion about button stop)
 	EM_msg.emergency_button_stop = m_SerRelayBoard->isEMStop();
 	EM_msg.scanner_stop = m_SerRelayBoard->isScannerStop();
 
@@ -406,11 +406,17 @@ void RelaisBoardNode::sendEmergencyStopStates()
 
         pr2_msgs::PowerBoardState pbs;
         pbs.header.stamp = ros::Time::now();
-        if(EM_stop_status_ == ST_EM_FREE)
-          pbs.run_stop = true;
-        else
-          pbs.run_stop = false;
-        pbs.wireless_stop = true;
+	// pr2 power_board_state
+	if(EM_msg.emergency_button_stop)
+	  pbs.run_stop = false;
+	else
+	  pbs.run_stop = true;
+	
+	//for cob the wireless stop field is misused as laser stop field
+	if(EM_msg.scanner_stop)
+	  pbs.wireless_stop = false; 
+	else
+	  pbs.wireless_stop = true;
 	pbs.input_voltage = current_voltage;
 	topicPub_boardState.publish(pbs);
 }
