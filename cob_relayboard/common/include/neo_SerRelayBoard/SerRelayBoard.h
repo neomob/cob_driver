@@ -71,10 +71,9 @@ public:
 	bool isDriveError();
 	bool isEMStop();
 	bool isScannerStop();
-	void readConfig(	int iTypeLCD,std::string pathToConf, std::string sNumComPort, 	int hasMotorRight, 
+	void setConfig(	int iTypeLCD, std::string sNumComPort, 	int hasMotorRight, 
 				int hasMotorLeft, int hasMotorRearRight, int hasMotorRearLeft,
 				int hasIOBoard, int hasUSBoard, int hasRadarBoard, int hasGyroBoard, 
-				double quickfix1, double quickfix2, double quickfix3, double quickfix4, 
 				DriveParam driveParamLeft, DriveParam driveParamRight,
 				DriveParam driveParamRearLeft, DriveParam driveParamRearRight
 	);

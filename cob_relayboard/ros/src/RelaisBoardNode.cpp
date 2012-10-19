@@ -61,8 +61,6 @@ int RelaisBoardNode::init()
 	current_voltage = 0;
 
 	m_SerRelayBoard = new SerRelayBoard();
-	readConfig(protocol_version_); //sets config params for the serrelayboard
-	m_SerRelayBoard->init();
 	ROS_INFO("Opened Relayboard at ComPort = %s", sComPort.c_str());
 
 	n.getParam("drive1/CANId", motorCanIdent[0]);
@@ -74,17 +72,17 @@ int RelaisBoardNode::init()
 	n.getParam("drive3/joint_name", joint_names[2]);
 	n.getParam("drive4/joint_name", joint_names[3]);
 	//topics, which get published if the module is available
-	n.getParam("hasMotorRight",activeModule[DRIVE1]);
-	n.getParam("hasMotorLeft",activeModule[DRIVE2]);
-	n.getParam("hasMotorRearRight",activeModule[DRIVE3]);
-	n.getParam("hasMotorRearLeft",activeModule[DRIVE4]);
+	n.param("hasMotorRight", activeModule[DRIVE1], 0);
+	n.param("hasMotorLeft", activeModule[DRIVE2], 0);
+	n.param("hasMotorRearRight", activeModule[DRIVE3], 0);
+	n.param("hasMotorRearLeft", activeModule[DRIVE4], 0);
 	if(activeModule[DRIVE1] == 1 || activeModule[DRIVE2] == 1 || activeModule[DRIVE3] == 1 || activeModule[DRIVE4] == 1)
 	{
 		topicPub_drives = n.advertise<cob_relayboard::DriveStates>("/drive_states",1);
 		topicSub_drives = n.subscribe("/cmd_drives",1,&RelaisBoardNode::getNewDriveStates, this);
 	}
-	n.getParam("hasIOBoard", activeModule[IO_BOARD]);
-	n.getParam("hasLCDOut", hasLCDOut);
+	n.param("hasIOBoard", activeModule[IO_BOARD],0);
+	n.param("hasLCDOut", hasLCDOut,0);
 	if(hasLCDOut == 1) topicSub_lcdDisplay = n.subscribe("/srb_lcd_display",1,&RelaisBoardNode::getNewLCDOutput, this);
 
 	if(activeModule[IO_BOARD] == 1)
@@ -95,7 +93,7 @@ int RelaisBoardNode::init()
 		topicPub_analogIn = n.advertise<cob_relayboard::IOAnalogIn>("/srb_io_analog_in",1);
 
 	}
-	n.getParam("hasUSBoard", activeModule[US_BOARD]);
+	n.param("hasUSBoard", activeModule[US_BOARD], 0);
 	if(activeModule[US_BOARD] == 1)
 	{
 		topicPub_usBoard = n.advertise<cob_relayboard::USBoard>("/srb_us_measurements",1);
@@ -103,67 +101,31 @@ int RelaisBoardNode::init()
 		topicSub_stopUSBoard = n.subscribe("/srb_stop_us_board",1,&RelaisBoardNode::stopUSBoard, this);
 
 	}
-	n.getParam("hasRadarBoard", activeModule[RADAR_BOARD]);
+	n.param("hasRadarBoard", activeModule[RADAR_BOARD], 0);
 	if(activeModule[RADAR_BOARD] == 1) topicPub_radarBoard = n.advertise<cob_relayboard::RadarBoard>("/srb_radar_measurements",1);
 
-	n.getParam("hasGyroBoard", activeModule[GYRO_BOARD]);
+	n.param("hasGyroBoard", activeModule[GYRO_BOARD], 0);
 	if(activeModule[GYRO_BOARD] == 1)
 	{
 		topicPub_gyroBoard = n.advertise<cob_relayboard::GyroBoard>("/srb_gyro_measurements",1);
 		topicSub_zeroGyro = n.subscribe("/srb_zero_gyro",1,&RelaisBoardNode::zeroGyro, this);
 	}
 
-	n.getParam("hasKeyPad", hasKeyPad);
+	n.param("hasKeyPad", hasKeyPad, 0);
 	if(hasKeyPad == 1) topicPub_keypad = n.advertise<cob_relayboard::Keypad>("/srb_keypad",1);
-	n.getParam("hasIRSensors", hasIRSensors);
+	n.param("hasIRSensors", hasIRSensors, 0);
 	if(hasIRSensors == 1) topicPub_IRSensor = n.advertise<cob_relayboard::IRSensors>("/srb_ir_measurements",1);
 
+	std::cout 	<< "RelaisBoardNode: " << "ComPort: " << sComPort << " message_timeout: " << relayboard_timeout_ << " requestRate: " << requestRate << " protocol_version: " << protocol_version_
+			<< " voltage_min: " << voltage_min_ << " voltage_max: " << voltage_max_ << " charge_nominal: " << charge_nominal_ << " voltage_nominal: " << voltage_nominal_
+			<< " drive1/CANId: " << motorCanIdent[0] << " drive2/CANId: " << motorCanIdent[1] << " drive3/CANId: " << motorCanIdent[2] << " drive4/CANId: " << motorCanIdent[3]
+			<< " drive1/joint_name: " << joint_names[0] << " drive2/joint_name: " << joint_names[1] << " drive3/joint_name: " << joint_names[2] << " drive4/joint_name: " << joint_names[3]
+			<< " hasMotorRight: " << activeModule[DRIVE1] << " hasMotorLeft: " << activeModule[DRIVE2] << " hasMotorRearRight: " << activeModule[DRIVE3] << " hasMotorRearLeft: " << activeModule[DRIVE4]
+			<< " hasIOBoard: " << activeModule[IO_BOARD] << " hasLCDOut: " << hasLCDOut << " hasUSBoard: " << activeModule[US_BOARD] << " hasRadarBoard: " << activeModule[RADAR_BOARD]
+			<< " hasGyroBoard: " << activeModule[GYRO_BOARD] << " hasKeyPad: " << hasKeyPad << " hasIRSensors: " << hasIRSensors << "\n";
 
 
-
-
-
-	// Init member variable for EM State
-	EM_stop_status_ = ST_EM_ACTIVE;
-	duration_for_EM_free_ = ros::Duration(1);
-	return 0;
-}
-
-void RelaisBoardNode::readConfig(int protocol_version_)
-{
-	std::string pathToConf = "";
-	int iTypeLCD = protocol_version_;
-	std::string sNumComPort; 	
-	int hasMotorRight, hasMotorLeft, hasMotorRearRight, hasMotorRearLeft;
-	int hasIOBoard;
-
-	int hasUSBoard;
-	int hasRadarBoard;
-	int hasGyroBoard;
-	double quickfix1, quickfix2, quickfix3, quickfix4;
 	DriveParam driveParamLeft, driveParamRight, driveParamRearLeft, driveParamRearRight;
-
-
-	n.getParam("ComPort", sNumComPort);
-	n.getParam("hasMotorRight", hasMotorRight);
-	n.getParam("hasMotorLeft", hasMotorLeft);
-	n.getParam("hasMotorRight", hasMotorRearRight);
-	n.getParam("hasMotorLeft", hasMotorRearLeft);
-	n.getParam("hasIOBoard", hasIOBoard);
-	n.getParam("hasUSBoard", hasUSBoard);
-	n.getParam("hasRadarBoard", hasRadarBoard);
-	n.getParam("hasGyroBoard", hasGyroBoard);
-
-
-	if(n.hasParam("drive1/quickFix")) n.getParam("drive1/quickFix", quickfix1);
-	else quickfix1 = 1;
-	if(n.hasParam("drive2/quickFix")) n.getParam("drive2/quickFix", quickfix2);
-	else quickfix2 = 1;
-	if(n.hasParam("drive3/quickFix")) n.getParam("drive3/quickFix", quickfix3);
-	else quickfix3 = 1;
-	if(n.hasParam("drive4/quickFix")) n.getParam("drive4/quickFix", quickfix4);
-	else quickfix4 = 1;
-
 
 	int iEncIncrPerRevMot;
 	double dVelMeasFrqHz;
@@ -291,13 +253,22 @@ void RelaisBoardNode::readConfig(int protocol_version_)
 							false, true );
 
 
-	m_SerRelayBoard->readConfig(	iTypeLCD, pathToConf, sNumComPort, hasMotorRight, 
-					hasMotorLeft, hasMotorRearRight, hasMotorRearLeft,
-					hasIOBoard, hasUSBoard, hasRadarBoard, hasGyroBoard, 
-					quickfix1, quickfix2, quickfix3, quickfix4, driveParamLeft, driveParamRight,
+
+	m_SerRelayBoard->setConfig(	protocol_version_, sComPort, activeModule[DRIVE1], 
+					activeModule[DRIVE2], activeModule[DRIVE3], activeModule[DRIVE4],
+					activeModule[IO_BOARD], activeModule[US_BOARD], activeModule[RADAR_BOARD], activeModule[GYRO_BOARD], 
+					driveParamLeft, driveParamRight,
 					driveParamRearLeft, driveParamRearRight
 			);
-};
+	
+	m_SerRelayBoard->init();
+
+	// Init member variable for EM State
+	EM_stop_status_ = ST_EM_ACTIVE;
+	duration_for_EM_free_ = ros::Duration(1);
+	return 0;
+}
+
 
 int RelaisBoardNode::requestBoardStatus() {
 	int ret;	

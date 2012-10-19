@@ -35,7 +35,7 @@
 
 
 #include <math.h>
-
+//#include <cstdio>
 #include "neo_SerRelayBoard/SerRelayBoard.h"
 
 
@@ -76,10 +76,9 @@ SerRelayBoard::SerRelayBoard()
 }
 */
 
-void SerRelayBoard::readConfig(	int iTypeLCD,std::string pathToConf, std::string sNumComPort, 	int hasMotorRight, 
+void SerRelayBoard::setConfig(	int iTypeLCD, std::string sNumComPort, 	int hasMotorRight, 
 				int hasMotorLeft, int hasMotorRearRight, int hasMotorRearLeft, 
 				int hasIOBoard, int hasUSBoard, int hasRadarBoard, int hasGyroBoard, 
-				double quickfix1, double quickfix2, double quickfix3, double quickfix4, 
 				DriveParam driveParamLeft, DriveParam driveParamRight,
 				DriveParam driveParamRearLeft, DriveParam driveParamRearRight
 			)
@@ -185,11 +184,6 @@ void SerRelayBoard::readConfig(	int iTypeLCD,std::string pathToConf, std::string
 	m_iVelMeasMotRearRightEncS = 0;
 	m_iPosMeasMotRearLeftEnc = 0;
 	m_iVelMeasMotRearLeftEncS = 0;
-
-	quickFix[0] = quickfix1;
-	quickFix[1] = quickfix2;
-	quickFix[2] = quickfix3;
-	quickFix[3] = quickfix4;
 
 	// GyroBoard
 	m_bGyroBoardZeroGyro = false;
@@ -308,6 +302,7 @@ bool SerRelayBoard::initPltf()
 	int iRet;
 	m_SerIO.setBaudRate(RS422_BAUDRATE);
 	m_SerIO.setDeviceName( m_sNumComPort.c_str() );
+	
 	m_SerIO.setBufferSize(RS422_RX_BUFFERSIZE, RS422_TX_BUFFERSIZE);
 	m_SerIO.setTimeout(RS422_TIMEOUT);
 	iRet = m_SerIO.open();
@@ -566,25 +561,25 @@ int SerRelayBoard::getWheelPosVel(	int iCanIdent, double* pdAngWheel, double* pd
 	
 	if(iCanIdent == CANNODE_MOTORRIGHT)
 	{
-		*pdAngWheel = m_DriveParamRight.getSign() * m_DriveParamRight.convIncrToRad(m_iPosMeasMotRightEnc) * quickFix[0];	
-		*pdVelWheel = m_DriveParamRight.getSign() * m_DriveParamRight.convIncrPerPeriodToRadS(m_iVelMeasMotRightEncS) * quickFix[0];
+		*pdAngWheel = m_DriveParamRight.getSign() * m_DriveParamRight.convIncrToRad(m_iPosMeasMotRightEnc);	
+		*pdVelWheel = m_DriveParamRight.getSign() * m_DriveParamRight.convIncrPerPeriodToRadS(m_iVelMeasMotRightEncS);
 	}
 
 	if(iCanIdent == CANNODE_MOTORLEFT)
 	{
-		*pdAngWheel = m_DriveParamLeft.getSign() * m_DriveParamLeft.convIncrToRad(m_iPosMeasMotLeftEnc) * quickFix[1];	
-		*pdVelWheel = m_DriveParamLeft.getSign() * m_DriveParamLeft.convIncrPerPeriodToRadS(m_iVelMeasMotLeftEncS) * quickFix[1];
+		*pdAngWheel = m_DriveParamLeft.getSign() * m_DriveParamLeft.convIncrToRad(m_iPosMeasMotLeftEnc);	
+		*pdVelWheel = m_DriveParamLeft.getSign() * m_DriveParamLeft.convIncrPerPeriodToRadS(m_iVelMeasMotLeftEncS);
 	}
 	if(iCanIdent == CANNODE_MOTORREARRIGHT)
 	{
-		*pdAngWheel = m_DriveParamRearRight.getSign() * m_DriveParamRearRight.convIncrToRad(m_iPosMeasMotRearRightEnc) * quickFix[2];	
-		*pdVelWheel = m_DriveParamRearRight.getSign() * m_DriveParamRearRight.convIncrPerPeriodToRadS(m_iVelMeasMotRearRightEncS) * quickFix[2];
+		*pdAngWheel = m_DriveParamRearRight.getSign() * m_DriveParamRearRight.convIncrToRad(m_iPosMeasMotRearRightEnc);	
+		*pdVelWheel = m_DriveParamRearRight.getSign() * m_DriveParamRearRight.convIncrPerPeriodToRadS(m_iVelMeasMotRearRightEncS);
 	}
 
 	if(iCanIdent == CANNODE_MOTORREARLEFT)
 	{
-		*pdAngWheel = m_DriveParamRearLeft.getSign() * m_DriveParamRearLeft.convIncrToRad(m_iPosMeasMotRearLeftEnc) * quickFix[3];	
-		*pdVelWheel = m_DriveParamRearLeft.getSign() * m_DriveParamRearLeft.convIncrPerPeriodToRadS(m_iVelMeasMotRearLeftEncS) * quickFix[3];
+		*pdAngWheel = m_DriveParamRearLeft.getSign() * m_DriveParamRearLeft.convIncrToRad(m_iPosMeasMotRearLeftEnc);	
+		*pdVelWheel = m_DriveParamRearLeft.getSign() * m_DriveParamRearLeft.convIncrPerPeriodToRadS(m_iVelMeasMotRearLeftEncS);
 	}
 
 	m_Mutex.unlock();
@@ -601,42 +596,42 @@ int SerRelayBoard::getWheelDltPosVel(	int iCanIdent, double* pdDltAng, double* p
 	
 	if(iCanIdent == CANNODE_MOTORRIGHT)
 	{
-		dCurrPos = m_DriveParamRight.getSign() * m_DriveParamRight.convIncrToRad(m_iPosMeasMotRightEnc) * quickFix[0];
+		dCurrPos = m_DriveParamRight.getSign() * m_DriveParamRight.convIncrToRad(m_iPosMeasMotRightEnc);
 		
 		*pdDltAng = dCurrPos - m_dLastPosRight;
 		m_dLastPosRight = dCurrPos;
 
-		*pdVelWheel = m_DriveParamRight.getSign() * m_DriveParamRight.convIncrPerPeriodToRadS(m_iVelMeasMotRightEncS) * quickFix[0];
+		*pdVelWheel = m_DriveParamRight.getSign() * m_DriveParamRight.convIncrPerPeriodToRadS(m_iVelMeasMotRightEncS);
 	}
 
 	if(iCanIdent == CANNODE_MOTORLEFT)
 	{
-		dCurrPos = m_DriveParamLeft.getSign() * m_DriveParamLeft.convIncrToRad(m_iPosMeasMotLeftEnc) * quickFix[1];
+		dCurrPos = m_DriveParamLeft.getSign() * m_DriveParamLeft.convIncrToRad(m_iPosMeasMotLeftEnc);
 
 		*pdDltAng = dCurrPos - m_dLastPosLeft;
 		m_dLastPosLeft = dCurrPos;
 
-		*pdVelWheel = m_DriveParamLeft.getSign() * m_DriveParamLeft.convIncrPerPeriodToRadS(m_iVelMeasMotLeftEncS) * quickFix[1];
+		*pdVelWheel = m_DriveParamLeft.getSign() * m_DriveParamLeft.convIncrPerPeriodToRadS(m_iVelMeasMotLeftEncS);
 	}
 
 	if(iCanIdent == CANNODE_MOTORREARRIGHT)
 	{
-		dCurrPos = m_DriveParamRearRight.getSign() * m_DriveParamRearRight.convIncrToRad(m_iPosMeasMotRearRightEnc) * quickFix[2];
+		dCurrPos = m_DriveParamRearRight.getSign() * m_DriveParamRearRight.convIncrToRad(m_iPosMeasMotRearRightEnc);
 		
 		*pdDltAng = dCurrPos - m_dLastPosRearRight;
 		m_dLastPosRearRight = dCurrPos;	
 
-		*pdVelWheel = m_DriveParamRearRight.getSign() * m_DriveParamRearRight.convIncrPerPeriodToRadS(m_iVelMeasMotRearRightEncS) * quickFix[2];
+		*pdVelWheel = m_DriveParamRearRight.getSign() * m_DriveParamRearRight.convIncrPerPeriodToRadS(m_iVelMeasMotRearRightEncS);
 	}
 
 	if(iCanIdent == CANNODE_MOTORREARLEFT)
 	{
-		dCurrPos = m_DriveParamRearLeft.getSign() * m_DriveParamRearLeft.convIncrToRad(m_iPosMeasMotRearLeftEnc) * quickFix[3];	
+		dCurrPos = m_DriveParamRearLeft.getSign() * m_DriveParamRearLeft.convIncrToRad(m_iPosMeasMotRearLeftEnc);	
 
 		*pdDltAng = dCurrPos - m_dLastPosRearLeft;
 		m_dLastPosRearLeft = dCurrPos;
 
-		*pdVelWheel = m_DriveParamRearLeft.getSign() * m_DriveParamRearLeft.convIncrPerPeriodToRadS(m_iVelMeasMotRearLeftEncS) *  quickFix[3];
+		*pdVelWheel = m_DriveParamRearLeft.getSign() * m_DriveParamRearLeft.convIncrPerPeriodToRadS(m_iVelMeasMotRearLeftEncS);
 	}
 
 	m_Mutex.unlock();
@@ -1138,7 +1133,7 @@ void SerRelayBoard::convDataToSendMsg(unsigned char cMsg[])
 
 	cMsg[iCnt++] = m_iConfigRelayBoard >> 8;
 	cMsg[iCnt++] = m_iConfigRelayBoard;
-
+	
 	cMsg[iCnt++] = m_iCmdRelayBoard >> 8;
 	cMsg[iCnt++] = m_iCmdRelayBoard;
 
@@ -1212,6 +1207,14 @@ void SerRelayBoard::convDataToSendMsg(unsigned char cMsg[])
 
 	// reset flags
 	m_iCmdRelayBoard &= ~CMD_RESET_POS_CNT;
+
+	/*std::cout << "message length " << m_iNumBytesSend << " checksum: " << iChkSum << " m_iTypeLCD " <<  m_iTypeLCD << "\n";
+	for (int i=0; i < m_iNumBytesSend; i++)
+	{	
+		printf("%x ", cMsg[i]);
+	}
+	std::cout<<"\n";
+	*/
 }
 
 //-----------------------------------------------
