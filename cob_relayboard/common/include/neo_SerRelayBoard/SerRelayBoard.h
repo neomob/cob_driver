@@ -71,9 +71,11 @@ public:
 	bool isDriveError();
 	bool isEMStop();
 	bool isScannerStop();
-	void readConfig(	int iTypeLCD,std::string pathToConf, std::string sNumComPort, 	int hasMotorRight, 
-				int hasMotorLeft, int hasIOBoard, int hasUSBoard, int hasRadarBoard, int hasGyroBoard, 
-				double quickfix1, double quickfix2, DriveParam driveParamLeft, DriveParam driveParamRight
+	void setConfig(	int iTypeLCD, std::string sNumComPort, 	int hasMotorRight, 
+				int hasMotorLeft, int hasMotorRearRight, int hasMotorRearLeft,
+				int hasIOBoard, int hasUSBoard, int hasRadarBoard, int hasGyroBoard, 
+				DriveParam driveParamLeft, DriveParam driveParamRight,
+				DriveParam driveParamRearLeft, DriveParam driveParamRearRight
 	);
 	//new Syntax: 
 	int sendRequest(); //sends collected data and requests response (in the Old version this was done by: setWheelVel() or setWheelPosVel();
@@ -112,6 +114,8 @@ public:
 	int getRelayBoardDigIn();
 	int setRelayBoardDigOut(int iChannel, bool bOn);
 	int getRelayBoardAnalogIn(int* piAnalogIn);
+	void setEMStop();
+	void resetEMStop();
 
 	// IOBoard - for function description see interface CanCtrlPltfItf
 	void requestIOBoardData();
@@ -185,6 +189,7 @@ public:
 		CONFIG_HAS_RADARBOARD1 = 8,
 		CONFIG_HAS_RADARBOARD2 = 16,
 		CONFIG_HAS_DRIVES = 32,
+		CONFIG_HAS_4_DRIVES = 64
 
 	};
 
@@ -196,7 +201,10 @@ public:
 		CANNODE_IOBOARD,
 		CANNODE_MOTORRIGHT,
 		CANNODE_MOTORLEFT,
-		CANNODE_USBOARD
+		CANNODE_USBOARD,
+		CANNODE_MOTORREARRIGHT,
+		CANNODE_MOTORREARLEFT
+
 	};
 
 	/**
@@ -211,13 +219,15 @@ public:
 	enum TypeLCD
 	{
 		LCD_20CHAR_TEXT,
-		LCD_60CHAR_TEXT
+		LCD_60CHAR_TEXT,
+		RELAY_BOARD_1_4
 	};
 
 protected:
+	int protocol_version;
 	std::string m_sNumComPort;
 
-	DriveParam m_DriveParamLeft, m_DriveParamRight;
+	DriveParam m_DriveParamLeft, m_DriveParamRight, m_DriveParamRearLeft, m_DriveParamRearRight;
 
 	Mutex m_Mutex;
 
@@ -230,7 +240,23 @@ protected:
 	int m_iNumBytesSend;
 	int m_iTypeLCD;
 
-	
+
+	//relayboard 1.4:
+	int m_iVelCmdMotRearRightEncS;
+	int m_iVelCmdMotRearLeftEncS;
+	char m_cSoftEMStop;
+	char m_cDebugRearRight[4];
+	int m_iPosMeasMotRearRightEnc;
+	int m_iVelMeasMotRearRightEncS;
+	int m_iPosMeasMotRearLeftEnc;
+	char m_cDebugRearLeft[4];
+	int m_iVelMeasMotRearLeftEncS;
+	int m_iMotRearRightStatus;
+	int m_iMotRearLeftStatus;
+	double m_dLastPosRearRight;
+	double m_dLastPosRearLeft;
+
+
 	//-----------------------
 	// send data
 
@@ -322,7 +348,7 @@ protected:
 	bool convRecMsgToData(unsigned char cMsg[]);
 private:
 	bool autoSendRequest;
-	double quickFix[2]; //TODO: quick and dirty odometry fix (rostopic echo /odom)
+	double quickFix[4]; //TODO: quick and dirty odometry fix (rostopic echo /odom)
 };
 
 
